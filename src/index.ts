@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import processPrompt from './process';
 import { initDb } from './db';
+import multer from "multer";
 
 // Load .env from project root
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -12,16 +13,31 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const upload = multer({
+  storage: multer.memoryStorage()
+});
+
 app.get('/', (req, res) => res.send({ ok: true, message: 'Task Graph Backend', version: '1.0.0' }));
 
 app.get('/health', (req, res) => res.send({ status: 'ok', timestamp: new Date().toISOString() }));
 
-app.post('/generate', async (req, res) => {
-  try {
-    const prompt = req.body.prompt;
-    if (!prompt) return res.status(400).json({ error: 'prompt required' });
 
-    const result = await processPrompt(prompt);
+app.post("/generate", upload.single("file"), async (req, res) => {
+  try {
+    let transcriptText = "";
+
+    // If file uploaded
+    if (req.file) {
+      transcriptText = req.file.buffer.toString("utf-8");
+    }
+    // If JSON sent
+    else if (req.body.prompt) {
+      transcriptText = req.body.prompt;
+    }
+    else {
+      return res.status(400).json({ error: "Transcript is required" });
+    }
+    const result = await processPrompt(transcriptText);
     if ((result as any).error) return res.status(400).json(result);
     return res.json(result);
   } catch (err: any) {
