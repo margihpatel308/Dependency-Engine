@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - LLM_MODE=mock
+      - DATABASE_PATH=/data/tasks.db
+    volumes:
+      - ./:/app:rw
+      - ./data:/data:rw
+
+  # Example placeholder for a local LLM service. Uncomment and replace image/command
+  # if you run a local model server (e.g., Ollama, text-generation-inference).
+  # local-llm:
+  #   image: ollama/ollama:latest
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ./models:/models:rw
